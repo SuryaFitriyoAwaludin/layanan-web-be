@@ -1,7 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const mysql = require('mysql2');
+// Import database dari config
+const { db } = require('./config/database');
+
+// Import routes
+const authRoutes = require('./routes/authRoutes');
 
 // Inisialisasi aplikasi Express
 const app = express();
@@ -11,20 +15,6 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Konfigurasi database
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'inventory_db',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-});
-
-// Menggunakan promise wrapper untuk async/await
-const db = pool.promise();
 
 // Fungsi untuk menguji koneksi database
 const testConnection = async () => {
@@ -37,6 +27,9 @@ const testConnection = async () => {
     return false;
   }
 };
+
+// Gunakan routes autentikasi
+app.use('/api/auth', authRoutes);
 
 // Route untuk mengecek status API
 app.get('/api/status', async (req, res) => {
