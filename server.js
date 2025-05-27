@@ -1,11 +1,20 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+
+// Import middleware
+const errorHandler = require('./middleware/errorHandler');
+
 // Import database dari config
 const { db } = require('./config/database');
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
+const barangRoutes = require('./routes/barangRoutes');
+const statusRoutes = require('./routes/statusRoutes');
+
+// Import utils
+const logger = require('./utils/logger');
 
 // Inisialisasi aplikasi Express
 const app = express();
@@ -28,35 +37,13 @@ const testConnection = async () => {
   }
 };
 
-// Gunakan routes autentikasi
+// Gunakan routes
 app.use('/api/auth', authRoutes);
+app.use('/api/barang', barangRoutes);
+app.use('/api/status', statusRoutes);
 
-// Route untuk mengecek status API
-app.get('/api/status', async (req, res) => {
-  try {
-    const isConnected = await testConnection();
-    
-    if (isConnected) {
-      res.json({
-        success: true,
-        message: 'API BERJALAN DENGAN BAIK',
-        database: 'Terhubung'
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        message: 'API berjalan, tetapi database tidak terhubung',
-        database: 'Tidak terhubung'
-      });
-    }
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Terjadi kesalahan pada API',
-      error: error.message
-    });
-  }
-});
+// Middleware error handler
+app.use(errorHandler);
 
 // Route untuk mendapatkan semua data barang
 app.get('/api/barang', async (req, res) => {
@@ -1042,16 +1029,9 @@ app.put('/api/stok-opname/:id/selesai', async (req, res) => {
   }
 });
 
-// Start server
+// Mulai server
 app.listen(PORT, () => {
-  console.log(`Server berjalan di port ${PORT}`);
-  // Test database connection on startup
-  testConnection();
-});
-
-// Root route
-app.get('/', (req, res) => {
-  res.json({ message: 'Selamat datang di API Inventory' });
+  logger.info(`Server berjalan di port ${PORT}`);
 });
 
 // Route untuk pengguna (users)
