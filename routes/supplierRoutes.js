@@ -4,10 +4,13 @@ const { verifyToken } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-// Route untuk mendapatkan semua data supplier
+// Route untuk mendapatkan semua supplier
 router.get('/', verifyToken, async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM supplier ORDER BY nama_supplier');
+    const [rows] = await db.query(`
+      SELECT * FROM supplier
+      ORDER BY nama_supplier ASC
+    `);
     
     res.json({ 
       success: true, 
@@ -15,7 +18,7 @@ router.get('/', verifyToken, async (req, res) => {
       data: rows 
     });
   } catch (error) {
-    console.error('Error getting all supplier:', error.message);
+    console.error('Error getting all suppliers:', error.message);
     res.status(500).json({ 
       success: false, 
       message: 'Terjadi kesalahan pada server', 

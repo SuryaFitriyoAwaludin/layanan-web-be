@@ -16,7 +16,7 @@ const testConnection = async () => {
 };
 
 // Route untuk mengecek status API
-router.get('/', async (req, res) => {
+router.get('/api/status', async (req, res) => {
   try {
     const isConnected = await testConnection();
     
