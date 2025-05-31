@@ -1,22 +1,9 @@
 const express = require('express');
-const { db } = require('../config/database');
-
 const router = express.Router();
+const { testConnection } = require('../config/database');
 
-// Fungsi untuk menguji koneksi database
-const testConnection = async () => {
-  try {
-    const [rows] = await db.query('SELECT 1');
-    console.log('Koneksi database berhasil!');
-    return true;
-  } catch (error) {
-    console.error('Koneksi database gagal:', error.message);
-    return false;
-  }
-};
-
-// Route untuk mengecek status API
-router.get('/', async (req, res) => {
+// Route untuk mengecek status API dan koneksi database
+router.get('/status', async (req, res) => {
   try {
     const isConnected = await testConnection();
     
