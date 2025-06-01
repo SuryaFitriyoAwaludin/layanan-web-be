@@ -8,7 +8,7 @@ const router = express.Router();
 router.get('/', verifyToken, isAdmin, async (req, res) => {
   try {
     const [rows] = await db.query(`
-      SELECT id_user, username, nama_lengkap, email, role, status, created_at, updated_at 
+      SELECT id_user, username, nama_user, role, status, created_at, updated_at 
       FROM users
       ORDER BY id_user DESC
     `);
@@ -34,7 +34,7 @@ router.get('/:id', verifyToken, isAdmin, async (req, res) => {
     const id = req.params.id;
     
     const [rows] = await db.query(`
-      SELECT id_user, username, nama_lengkap, email, role, status, created_at, updated_at 
+      SELECT id_user, username, nama_user, role, status, created_at, updated_at 
       FROM users
       WHERE id_user = ?
     `, [id]);
@@ -67,16 +67,15 @@ router.post('/', verifyToken, isAdmin, async (req, res) => {
     const { 
       username, 
       password, 
-      nama_lengkap, 
-      email, 
+      nama_user, 
       role 
     } = req.body;
     
     // Validasi data
-    if (!username || !password || !nama_lengkap || !email || !role) {
+    if (!username || !password || !nama_user || !role) {
       return res.status(400).json({
         success: false,
-        message: 'Data tidak lengkap. Username, password, nama lengkap, email, dan role harus diisi'
+        message: 'Data tidak lengkap. Username, password, nama user, dan role harus diisi'
       });
     }
     
@@ -90,23 +89,13 @@ router.post('/', verifyToken, isAdmin, async (req, res) => {
       });
     }
     
-    // Cek apakah email sudah digunakan
-    const [existingEmail] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
-    
-    if (existingEmail.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email sudah digunakan'
-      });
-    }
-    
     // Hash password (gunakan bcrypt jika tersedia)
     // Untuk contoh ini, kita asumsikan password sudah di-hash sebelumnya
     
     // Insert pengguna baru
     const [result] = await db.query(
-      'INSERT INTO users (username, password, nama_lengkap, email, role, status) VALUES (?, ?, ?, ?, ?, ?)',
-      [username, password, nama_lengkap, email, role, 'active']
+      'INSERT INTO users (username, password, nama_user, role, status) VALUES (?, ?, ?, ?, ?)',
+      [username, password, nama_user, role, 'active']
     );
     
     res.status(201).json({
@@ -115,8 +104,7 @@ router.post('/', verifyToken, isAdmin, async (req, res) => {
       data: {
         id_user: result.insertId,
         username,
-        nama_lengkap,
-        email,
+        nama_user,
         role
       }
     });
