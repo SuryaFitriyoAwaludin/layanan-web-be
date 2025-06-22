@@ -7,7 +7,14 @@ const router = express.Router();
 // Route untuk mendapatkan semua data kategori
 router.get('/', verifyToken, async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM kategori ORDER BY nama_kategori');
+    const [rows] = await db.query(`
+      SELECT k.*, 
+             COALESCE(COUNT(b.id_barang), 0) as total_barang
+      FROM kategori k
+      LEFT JOIN barang b ON k.id_kategori = b.id_kategori
+      GROUP BY k.id_kategori, k.nama_kategori, k.deskripsi, k.created_at, k.updated_at
+      ORDER BY k.nama_kategori
+    `);
     
     res.json({ 
       success: true, 

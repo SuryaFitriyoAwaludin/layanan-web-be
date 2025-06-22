@@ -7,7 +7,14 @@ const router = express.Router();
 // Route untuk mendapatkan semua data lokasi
 router.get('/', verifyToken, async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM lokasi ORDER BY nama_lokasi');
+    const [rows] = await db.query(`
+      SELECT l.*, 
+             COALESCE(COUNT(b.id_barang), 0) as total_barang
+      FROM lokasi l
+      LEFT JOIN barang b ON l.id_lokasi = b.id_lokasi
+      GROUP BY l.id_lokasi, l.nama_lokasi, l.deskripsi, l.created_at, l.updated_at
+      ORDER BY l.nama_lokasi
+    `);
     
     res.json({ 
       success: true, 
