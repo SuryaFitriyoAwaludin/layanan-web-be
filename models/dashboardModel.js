@@ -84,9 +84,21 @@ class DashboardModel {
         'SELECT COUNT(*) as lokasi_barang FROM lokasi'
       );
       
+      // Mendapatkan total nilai inventaris
+      const [nilaiRows] = await db.query(
+        'SELECT SUM(stok * harga_beli) as total_nilai FROM barang WHERE harga_beli IS NOT NULL'
+      );
+      
+      // Mendapatkan jumlah barang dengan stok rendah
+      const [stokRendahRows] = await db.query(
+        'SELECT COUNT(*) as stok_rendah FROM barang WHERE stok <= stok_minimum AND stok_minimum > 0'
+      );
+      
       return {
         kuantitas_tersedia: kuantitasRows[0].kuantitas_tersedia || 0,
-        lokasi_barang: lokasiRows[0].lokasi_barang || 0
+        lokasi_barang: lokasiRows[0].lokasi_barang || 0,
+        total_nilai: nilaiRows[0].total_nilai || 0,
+        stok_rendah: stokRendahRows[0].stok_rendah || 0
       };
     } catch (error) {
       console.error('Error getting ringkasan inventaris:', error.message);
@@ -107,9 +119,21 @@ class DashboardModel {
         'SELECT COUNT(*) as jumlah_kategori FROM kategori'
       );
       
+      // Mendapatkan total produk
+      const [totalProdukRows] = await db.query(
+        'SELECT COUNT(*) as total_produk FROM barang'
+      );
+      
+      // Mendapatkan jumlah supplier
+      const [supplierRows] = await db.query(
+        'SELECT COUNT(*) as jumlah_supplier FROM supplier'
+      );
+      
       return {
         jumlah_tersedia: tersediaRows[0].jumlah_tersedia || 0,
-        jumlah_kategori: kategoriRows[0].jumlah_kategori || 0
+        jumlah_kategori: kategoriRows[0].jumlah_kategori || 0,
+        total_produk: totalProdukRows[0].total_produk || 0,
+        jumlah_supplier: supplierRows[0].jumlah_supplier || 0
       };
     } catch (error) {
       console.error('Error getting ringkasan produk:', error.message);
