@@ -31,6 +31,34 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
+// Route untuk mendapatkan barang dengan stok rendah
+router.get('/stok-rendah', verifyToken, async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT b.*, k.nama_kategori, l.nama_lokasi 
+      FROM barang b
+      LEFT JOIN kategori k ON b.id_kategori = k.id_kategori
+      LEFT JOIN lokasi l ON b.id_lokasi = l.id_lokasi
+      WHERE b.stok <= b.stok_minimum
+      ORDER BY b.stok ASC
+    `);
+    
+    res.json({ 
+      success: true, 
+      message: 'Berhasil mendapatkan data barang dengan stok rendah', 
+      data: rows,
+      count: rows.length 
+    });
+  } catch (error) {
+    console.error('Error getting barang with low stock:', error.message);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Terjadi kesalahan pada server', 
+      error: error.message 
+    });
+  }
+});
+
 // Route untuk mendapatkan barang berdasarkan ID
 router.get('/:id', verifyToken, async (req, res) => {
   try {
@@ -90,8 +118,8 @@ router.post('/', verifyToken, isAdmin, async (req, res) => {
     
     // Insert data barang baru
     const [result] = await db.query(
-      'INSERT INTO barang (kode_barang, nama_barang, id_kategori, id_lokasi, stok, satuan, keterangan, harga_beli, harga_jual, gambar) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [kode_barang, nama_barang, id_kategori || null, id_lokasi || null, stok || 0, satuan || '', keterangan || '', harga_beli || 0, harga_jual || 0, gambar || null]
+      'INSERT INTO barang (kode_barang, nama_barang, id_kategori, id_lokasi, stok, stok_minimum, satuan, keterangan, harga_beli, harga_jual, gambar) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [kode_barang, nama_barang, id_kategori || null, id_lokasi || null, stok || 0, req.body.stok_minimum || 5, satuan || '', keterangan || '', harga_beli || 0, harga_jual || 0, gambar || null]
     );
     
     if (result.affectedRows === 0) {
@@ -179,8 +207,8 @@ router.put('/:id', verifyToken, isAdmin, async (req, res) => {
     
     // Update data barang
     const [result] = await db.query(
-      'UPDATE barang SET kode_barang = ?, nama_barang = ?, id_kategori = ?, id_lokasi = ?, stok = ?, satuan = ?, keterangan = ?, harga_beli = ?, harga_jual = ?, gambar = ? WHERE id_barang = ?',
-      [kode_barang, nama_barang, id_kategori || null, id_lokasi || null, stok || 0, satuan || '', keterangan || '', harga_beli || existingBarang[0].harga_beli, harga_jual || existingBarang[0].harga_jual, gambar || existingBarang[0].gambar, id]
+      'UPDATE barang SET kode_barang = ?, nama_barang = ?, id_kategori = ?, id_lokasi = ?, stok = ?, stok_minimum = ?, satuan = ?, keterangan = ?, harga_beli = ?, harga_jual = ?, gambar = ? WHERE id_barang = ?',
+      [kode_barang, nama_barang, id_kategori || null, id_lokasi || null, stok || 0, req.body.stok_minimum || existingBarang[0].stok_minimum || 5, satuan || '', keterangan || '', harga_beli || existingBarang[0].harga_beli, harga_jual || existingBarang[0].harga_jual, gambar || existingBarang[0].gambar, id]
     );
     
     if (result.affectedRows === 0) {
