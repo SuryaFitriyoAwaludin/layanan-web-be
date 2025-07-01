@@ -8,8 +8,13 @@ const router = express.Router();
 router.get('/', verifyToken, async (req, res) => {
   try {
     const [rows] = await db.query(`
-      SELECT * FROM transaksi_keluar
-      ORDER BY id_transaksi_keluar DESC
+      SELECT 
+        tk.*, 
+        SUM(dtk.jumlah) AS total_barang
+      FROM transaksi_keluar tk
+      LEFT JOIN detail_transaksi_keluar dtk ON tk.id_transaksi_keluar = dtk.id_transaksi_keluar
+      GROUP BY tk.id_transaksi_keluar
+      ORDER BY tk.id_transaksi_keluar DESC
     `);
     
     res.json({ 
@@ -75,7 +80,6 @@ router.get('/:id', verifyToken, async (req, res) => {
 router.post('/', verifyToken, isAdmin, async (req, res) => {
   try {
     const { 
-      no_referensi, 
       tanggal_transaksi, 
       tujuan, 
       keterangan, 
@@ -84,12 +88,23 @@ router.post('/', verifyToken, isAdmin, async (req, res) => {
     } = req.body;
     
     // Validasi data
-    if (!no_referensi || !tanggal_transaksi || !detail_items || !Array.isArray(detail_items) || detail_items.length === 0) {
+    if (!tanggal_transaksi || !detail_items || !Array.isArray(detail_items) || detail_items.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Data tidak lengkap. No referensi, tanggal, dan detail item harus diisi'
+        message: 'Data tidak lengkap. Tanggal dan detail item harus diisi'
       });
     }
+
+    // Generate no_referensi
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const seconds = date.getSeconds().toString().padStart(2, '0');
+    const milliseconds = date.getMilliseconds().toString().padStart(3, '0');
+    const no_referensi = `TK-${year}${month}${day}-${hours}${minutes}${seconds}${milliseconds}`;
     
     // Mulai transaksi database
     await db.query('START TRANSACTION');

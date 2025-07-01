@@ -8,8 +8,11 @@ const router = express.Router();
 router.get('/', verifyToken, async (req, res) => {
   try {
     const [rows] = await db.query(`
-      SELECT * FROM supplier
-      ORDER BY nama_supplier ASC
+      SELECT s.*, COUNT(tm.id_transaksi_masuk) AS total_transaksi_masuk
+      FROM supplier s
+      LEFT JOIN transaksi_masuk tm ON s.id_supplier = tm.id_supplier
+      GROUP BY s.id_supplier
+      ORDER BY s.nama_supplier ASC
     `);
     
     res.json({ 
